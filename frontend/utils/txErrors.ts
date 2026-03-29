@@ -1,6 +1,26 @@
 import { decodeErrorResult } from "viem";
 
 import { vibePredictionMarketAbi } from "@/lib/contracts";
+import { scalarPredictionMarketAbi } from "@/lib/scalar";
+
+// SCALAR: `ScalarPredictionMarket` custom errors
+const SCALAR_CUSTOM_ERROR_MESSAGES: Record<string, string> = {
+  OwnableInvalidOwner: "Invalid owner configuration.",
+  OwnableUnauthorizedAccount: "Only the contract owner can do this.",
+  ReentrancyGuardReentrantCall: "Re-entrant call blocked — try again.",
+  SafeERC20FailedOperation: "Token transfer failed — check balance and allowance.",
+  Scalar__AlreadyClaimed: "You already claimed for this market.",
+  Scalar__BettingClosed: "Betting is closed — the market ended or is resolved.",
+  Scalar__EmptyQuestion: "Question cannot be empty.",
+  Scalar__InvalidAmount: "Amount must be greater than zero.",
+  Scalar__InvalidEndTime: "End time must be in the future.",
+  Scalar__MarketAlreadyResolved: "This market is already resolved.",
+  Scalar__MarketDoesNotExist: "This market does not exist.",
+  Scalar__MarketNotResolved: "This market is not resolved yet.",
+  Scalar__NothingToClaim: "Nothing to claim for this market.",
+  Scalar__TradingNotClosed: "Trading is still open — wait until after the end time.",
+  Scalar__ZeroAddress: "Invalid zero address in configuration.",
+};
 
 // VIBE: `VibePredictionMarketV2` custom errors (decoded before legacy Error(string)).
 const V2_CUSTOM_ERROR_MESSAGES: Record<string, string> = {
@@ -84,6 +104,16 @@ export function extractTxErrorMessage(err: unknown, fallback: string): string {
 
   const hex = findHexData(err);
   if (hex) {
+    try {
+      const decodedScalar = decodeErrorResult({
+        abi: scalarPredictionMarketAbi,
+        data: hex,
+      });
+      const scalarMsg = SCALAR_CUSTOM_ERROR_MESSAGES[decodedScalar.errorName];
+      if (scalarMsg) return scalarMsg;
+    } catch {
+      /* not a Scalar custom error */
+    }
     try {
       const decodedV2 = decodeErrorResult({
         abi: vibePredictionMarketAbi,

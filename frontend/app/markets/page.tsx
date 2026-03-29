@@ -1,5 +1,6 @@
-import { VibeMarketsPage } from "@/components/VibeMarketsPage";
+import { redirect } from "next/navigation";
 
-export default function MarketsPage() {
-  return <VibeMarketsPage />;
+// SCALAR: single list lives on `/`; keep `/markets` as a stable alias
+export default function MarketsAliasPage() {
+  redirect("/");
 }

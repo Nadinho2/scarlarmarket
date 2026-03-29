@@ -28,4 +28,9 @@ arc_testnet = "https://rpc.testnet.arc.network"
 [etherscan]
 arc_testnet = { url = "https://testnet.arcscan.app/api", key = "any" }
 
+# SCALAR: `forge build` runs forge-lint by default. Legacy Vibe contracts use camelCase public
+# immutables (getter names); fork tests use raw `transfer` on purpose — exclude those style lints.
+[lint]
+exclude_lints = ["screaming-snake-case-immutable", "erc20-unchecked-transfer"]
+
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options

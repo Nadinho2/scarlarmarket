@@ -1,9 +1,8 @@
 "use client";
 
-// VIBE: Single market card — approve VIBE, Bet YES/NO, resolve (owner), claim.
+// SCALAR: trade, resolve (owner), claim — parimutuel binary market
 
 import { useState } from "react";
-import { KeyRound } from "lucide-react";
 import { parseUnits } from "viem";
 import {
   useAccount,
@@ -34,7 +33,6 @@ type Props = {
   now: bigint;
   tokenDecimals: number;
   tokenSymbol: string;
-  /** Basis points taken for staking; 0 means no fee. */
   feeBps: bigint;
   isOwner: boolean;
   wrongNetwork: boolean;
@@ -151,7 +149,7 @@ export function MarketCard({
     if (!address || amountWei === null || invalidAmount) return;
     if (needsApprove) {
       toastTxError(
-        new Error("Approve VIBE first"),
+        new Error("Approve first"),
         "Approve the spending cap for this amount",
       );
       return;
@@ -284,105 +282,87 @@ export function MarketCard({
 
   return (
     <article
+      id={`market-${id.toString()}`}
       className={cn(
-        "rounded-2xl border border-cyan-500/15 bg-black/30 p-4 shadow-[0_0_24px_rgba(0,0,0,0.35)] transition-shadow sm:p-5",
+        "scroll-mt-28 rounded-xl border border-zinc-800/90 bg-zinc-950/30 p-5 sm:p-6",
         status === "resolved" &&
-          (market.winningIsYes
-            ? "border-emerald-500/25 shadow-[0_0_32px_rgba(52,211,153,0.12)]"
-            : "border-rose-500/25 shadow-[0_0_32px_rgba(244,63,94,0.1)]"),
+          "border-zinc-700/80",
       )}
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-mono uppercase tracking-wider text-zinc-500">
+          <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-600">
             Market #{id.toString()}
           </p>
-          <h3 className="mt-1 text-base font-semibold leading-snug text-white sm:text-lg">
+          <h3 className="mt-1 text-base font-medium leading-snug text-white sm:text-lg">
             {market.question}
           </h3>
         </div>
         <StatusPill status={status} />
       </div>
 
-      <dl className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
-        <div className="rounded-xl border border-white/[0.06] bg-zinc-950/50 px-3 py-2">
-          <dt className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
+      <div className="mt-6 space-y-2">
+        <div className="flex justify-between text-xs text-zinc-500">
+          <span>Yes {yesPct.toFixed(1)}%</span>
+          <span>No {noPct.toFixed(1)}%</span>
+        </div>
+        <div className="flex h-2 overflow-hidden rounded-full bg-zinc-800">
+          <div
+            className="bg-[#00f5ff]/45"
+            style={{ width: `${yesPct}%` }}
+          />
+          <div className="flex-1 bg-zinc-700/60" />
+        </div>
+      </div>
+
+      <dl className="mt-6 grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
+        <div className="rounded-lg border border-zinc-800/80 px-3 py-2.5">
+          <dt className="text-[10px] font-medium uppercase tracking-wide text-zinc-600">
             Ends
           </dt>
-          <dd className="mt-0.5 font-mono text-xs text-cyan-100/90">{endLabel}</dd>
+          <dd className="mt-0.5 text-xs tabular-nums text-zinc-300">{endLabel}</dd>
         </div>
-        <div className="rounded-xl border border-white/[0.06] bg-zinc-950/50 px-3 py-2">
-          <dt className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
-            Pool volume
+        <div className="rounded-lg border border-zinc-800/80 px-3 py-2.5">
+          <dt className="text-[10px] font-medium uppercase tracking-wide text-zinc-600">
+            Volume
           </dt>
-          <dd className="mt-0.5 font-mono text-xs text-zinc-100">
+          <dd className="mt-0.5 text-xs tabular-nums text-zinc-200">
             {formatTokenAmount(totalPot, tokenDecimals, 2)} {tokenSymbol}
           </dd>
         </div>
-        <div
-          className={cn(
-            "rounded-xl border border-emerald-500/20 bg-emerald-950/20 px-3 py-2 transition-all",
-            market.resolved &&
-              market.winningIsYes &&
-              "ring-2 ring-emerald-400/50 shadow-[0_0_20px_rgba(52,211,153,0.2)]",
-          )}
-        >
-          <dt className="text-[10px] font-semibold uppercase tracking-wide text-emerald-400/90">
-            YES %
+        <div className="col-span-2 rounded-lg border border-zinc-800/80 px-3 py-2.5 sm:col-span-1">
+          <dt className="text-[10px] font-medium uppercase tracking-wide text-zinc-600">
+            Your stake
           </dt>
-          <dd className="mt-0.5 font-mono text-xs text-emerald-100">
-            {totalPot > 0n ? `${yesPct.toFixed(1)}%` : "—"}
-          </dd>
-        </div>
-        <div
-          className={cn(
-            "rounded-xl border border-rose-500/20 bg-rose-950/20 px-3 py-2 transition-all",
-            market.resolved &&
-              !market.winningIsYes &&
-              "ring-2 ring-rose-400/45 shadow-[0_0_20px_rgba(244,63,94,0.18)]",
-          )}
-        >
-          <dt className="text-[10px] font-semibold uppercase tracking-wide text-rose-300/90">
-            NO %
-          </dt>
-          <dd className="mt-0.5 font-mono text-xs text-rose-100">
-            {totalPot > 0n ? `${noPct.toFixed(1)}%` : "—"}
+          <dd className="mt-0.5 text-xs text-zinc-300">
+            Yes {formatTokenAmount(userYes, tokenDecimals, 4)} · No{" "}
+            {formatTokenAmount(userNo, tokenDecimals, 4)}{" "}
+            <span className="text-zinc-500">{tokenSymbol}</span>
           </dd>
         </div>
       </dl>
 
-      <div className="mt-4 rounded-xl border border-white/[0.06] bg-zinc-950/40 px-3 py-2.5">
-        <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
-          {feeBps > 0n
-            ? `Your pool stake (after ${(Number(feeBps) / 100).toFixed(0)}% platform fee to VibeStaking)`
-            : "Your pool stake (no platform fee — full amount in pool)"}
+      {feeBps > 0n ? (
+        <p className="mt-4 text-[11px] leading-relaxed text-zinc-600">
+          {(Number(feeBps) / 100).toFixed(0)}% fee on each position; remainder
+          stays in the pool for winners.
         </p>
-        <p className="mt-1 font-mono text-sm text-zinc-200">
-          YES{" "}
-          <span className="text-emerald-300">
-            {formatTokenAmount(userYes, tokenDecimals, 4)} {tokenSymbol}
-          </span>
-          <span className="mx-2 text-zinc-600">·</span>
-          NO{" "}
-          <span className="text-rose-300">
-            {formatTokenAmount(userNo, tokenDecimals, 4)} {tokenSymbol}
-          </span>
+      ) : (
+        <p className="mt-4 text-[11px] text-zinc-600">
+          No protocol fee — full amount enters the pool.
         </p>
-      </div>
+      )}
 
       {status === "open" && isOwner ? (
-        <p className="mt-3 rounded-lg border border-fuchsia-500/20 bg-fuchsia-950/15 px-3 py-2 text-[11px] leading-relaxed text-fuchsia-100/90">
-          <span className="font-semibold text-fuchsia-200">Owner:</span> when this
-          market hits its end time, the{" "}
-          <span className="font-mono text-cyan-200">resolveMarket</span> controls
-          appear here — sign with this same wallet.
+        <p className="mt-3 rounded-lg border border-zinc-800/80 bg-zinc-900/30 px-3 py-2 text-[11px] text-zinc-500">
+          Owner: after end time, resolve from this card with the same wallet.
         </p>
       ) : null}
 
       {status === "open" ? (
-        <div className="mt-4 space-y-3">
-          <label className="block text-xs font-medium text-zinc-400">
-            Bet amount ({tokenSymbol})
+        <div className="mt-5 space-y-3">
+          <label className="block text-xs font-medium text-zinc-500">
+            Amount ({tokenSymbol})
           </label>
           <input
             type="text"
@@ -393,157 +373,133 @@ export function MarketCard({
             className={vibeInput()}
             disabled={!canBet}
           />
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
             {needsApprove && canBet ? (
               <TransactionButton
-                variant="orange"
+                variant="muted"
                 loading={busy === "approveYes"}
                 disabled={!canBet || invalidAmount}
                 onClick={() => void approveForBet()}
-                className="min-h-[52px] sm:flex-1"
+                className="min-h-[48px] sm:flex-1"
               >
                 Approve {tokenSymbol}
               </TransactionButton>
             ) : null}
             <TransactionButton
-              variant="cyan"
+              variant="primary"
               loading={busy === "yes"}
               disabled={!canBet || invalidAmount || needsApprove}
               onClick={() => void placeBet(true)}
-              className="min-h-[52px] flex-1 text-base font-bold tracking-wide"
+              className="min-h-[48px] flex-1"
             >
-              Bet YES
+              Buy Yes
             </TransactionButton>
             <TransactionButton
-              variant="orange"
+              variant="outline"
               loading={busy === "no"}
               disabled={!canBet || invalidAmount || needsApprove}
               onClick={() => void placeBet(false)}
-              className="min-h-[52px] flex-1 text-base font-bold tracking-wide"
+              className="min-h-[48px] flex-1"
             >
-              Bet NO
+              Buy No
             </TransactionButton>
           </div>
         </div>
       ) : null}
 
       {status === "closed" && isOwner && totalPot === 0n ? (
-        <p className="mt-4 text-xs text-zinc-500">
+        <p className="mt-4 text-xs text-zinc-600">
           No pool liquidity — nothing to resolve.
         </p>
       ) : null}
 
       {status === "closed" && isOwner && totalPot > 0n ? (
-        <div
-          className={cn(
-            "mt-4 space-y-3 rounded-2xl border-2 border-fuchsia-500/50 bg-gradient-to-br from-fuchsia-950/50 via-[#1a1025] to-cyan-950/30 p-4 shadow-[0_0_28px_rgba(217,70,239,0.2)] sm:p-5",
-          )}
-        >
-          <div className="flex items-start gap-3">
-            <KeyRound
-              className="mt-0.5 h-6 w-6 shrink-0 text-fuchsia-300"
-              aria-hidden
-            />
-            <div className="min-w-0 space-y-1">
-              <p className="text-xs font-black uppercase tracking-[0.12em] text-fuchsia-200">
-                Owner action — sign from your wallet
-              </p>
-              <p className="text-sm font-semibold text-white">
-                This market is closed. Choose the winning side. Your wallet will
-                send <code className="text-cyan-200">resolveMarket</code> on Arc.
-              </p>
-              <p className="text-[11px] leading-relaxed text-cyan-200/80">
-                Signing wallet:{" "}
-                <span className="font-mono text-cyan-100">
-                  {address ?? "—"}
-                </span>
-              </p>
-            </div>
-          </div>
+        <div className="mt-5 space-y-3 rounded-lg border border-zinc-800 bg-zinc-900/25 p-4">
+          <p className="text-sm font-medium text-zinc-200">
+            Resolve outcome
+          </p>
+          <p className="text-xs text-zinc-500">
+            Choose the winning side. This sends{" "}
+            <code className="text-zinc-400">resolveMarket</code> on Arc.
+          </p>
           {wrongNetwork ? (
-            <p className="rounded-lg border border-red-500/35 bg-red-950/40 px-3 py-2 text-[11px] font-semibold text-red-200">
-              Switch to Arc Testnet — resolution txs only work on this chain.
+            <p className="text-xs text-red-300/90">
+              Switch to Arc Testnet to submit resolution.
             </p>
           ) : null}
-          <div className="flex flex-col gap-3 sm:flex-row">
+          <div className="flex flex-col gap-2 sm:flex-row">
             <TransactionButton
-              variant="cyan"
+              variant="primary"
               loading={busy === "resolveYes"}
               disabled={resolveYesDisabled}
               onClick={() => void resolve(true)}
-              className="min-h-[52px] flex-1 text-base font-bold"
+              className="min-h-[48px] flex-1"
             >
-              Resolve YES
+              Resolve Yes
             </TransactionButton>
             <TransactionButton
-              variant="orange"
+              variant="outline"
               loading={busy === "resolveNo"}
               disabled={resolveNoDisabled}
               onClick={() => void resolve(false)}
-              className="min-h-[52px] flex-1 text-base font-bold"
+              className="min-h-[48px] flex-1"
             >
-              Resolve NO
+              Resolve No
             </TransactionButton>
           </div>
         </div>
       ) : null}
 
       {status === "closed" && !isOwner ? (
-        <p className="mt-4 text-xs text-amber-200/80">
-          Market closed — waiting for the owner to resolve
+        <p className="mt-4 text-xs text-zinc-500">
+          Awaiting resolution
           {typeof marketOwner === "string" ? (
             <>
               {" "}
-              (
-              <span className="font-mono text-amber-100/90">
+              <span className="font-mono text-zinc-400">
                 {marketOwner.slice(0, 6)}…{marketOwner.slice(-4)}
               </span>
-              ).
             </>
-          ) : (
-            "."
-          )}
+          ) : null}
+          .
         </p>
       ) : null}
 
       {market.resolved ? (
-        <div className="mt-4 space-y-2 border-t border-white/[0.06] pt-4">
-          <p className="text-sm font-semibold text-purple-200">
+        <div className="mt-5 space-y-3 border-t border-zinc-800/80 pt-5">
+          <p className="text-sm text-zinc-300">
             Outcome:{" "}
             <span
               className={cn(
-                "font-black",
-                market.winningIsYes ? "text-emerald-300" : "text-rose-300",
+                "font-medium",
+                market.winningIsYes ? "text-[#00f5ff]/90" : "text-zinc-400",
               )}
             >
-              {market.winningIsYes ? "YES" : "NO"}
-            </span>{" "}
-            wins — claim your share of the pool below.
+              {market.winningIsYes ? "Yes" : "No"}
+            </span>
           </p>
           {userWinning > 0n ? (
-            <p className="text-xs text-zinc-400">
-              Your estimated payout:{" "}
-              <span className="font-mono text-cyan-200">
+            <p className="text-xs text-zinc-500">
+              Estimated payout:{" "}
+              <span className="tabular-nums text-zinc-300">
                 {formatTokenAmount(estimatedPayout, tokenDecimals, 4)}{" "}
                 {tokenSymbol}
               </span>
             </p>
           ) : (
-            <p className="text-xs text-zinc-500">You had no stake on the winning side.</p>
+            <p className="text-xs text-zinc-600">No stake on the winning side.</p>
           )}
           {showClaim ? (
             <TransactionButton
-              variant="purple"
+              variant="primary"
               loading={busy === "claim"}
               onClick={() => void claim()}
             >
-              Claim winnings
+              Claim
             </TransactionButton>
           ) : null}
           {claimed && userWinning > 0n ? (
-            <p className="text-xs font-medium text-emerald-400/90">
-              Winnings claimed for this market.
-            </p>
+            <p className="text-xs text-zinc-500">Claimed.</p>
           ) : null}
         </div>
       ) : null}
@@ -559,25 +515,22 @@ function StatusPill({
   const map = {
     open: {
       label: "Open",
-      className:
-        "border-emerald-500/35 bg-emerald-500/10 text-emerald-200 shadow-[0_0_12px_rgba(52,211,153,0.15)]",
+      className: "border-zinc-700 text-zinc-400",
     },
     closed: {
       label: "Closed",
-      className:
-        "border-amber-500/35 bg-amber-500/10 text-amber-200 shadow-[0_0_12px_rgba(251,191,36,0.12)]",
+      className: "border-zinc-700 text-zinc-500",
     },
     resolved: {
       label: "Resolved",
-      className:
-        "border-purple-500/35 bg-purple-500/10 text-purple-200 shadow-[0_0_12px_rgba(168,85,247,0.12)]",
+      className: "border-zinc-600 text-zinc-400",
     },
   };
   const m = map[status];
   return (
     <span
       className={cn(
-        "shrink-0 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-wide",
+        "shrink-0 rounded-md border px-2.5 py-1 text-[10px] font-medium uppercase tracking-wider",
         m.className,
       )}
     >

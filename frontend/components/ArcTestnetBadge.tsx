@@ -1,27 +1,46 @@
 "use client";
 
-import { BadgeCheck } from "lucide-react";
-
 import { cn } from "@/utils/cn";
 
 type Props = {
-  visible: boolean;
+  /** When false, wallet is not connected — still show static Arc label */
+  isConnected: boolean;
+  wrongNetwork?: boolean;
+  onArc?: boolean;
   className?: string;
 };
 
-// VIBE: Shown when the wallet is on Arc Testnet — builds trust for testers
-export function ArcTestnetBadge({ visible, className }: Props) {
-  if (!visible) return null;
-
+// SCALAR: always-visible network label; state reflects wallet when connected
+export function ArcTestnetBadge({
+  isConnected,
+  wrongNetwork,
+  onArc,
+  className,
+}: Props) {
   return (
     <div
       className={cn(
-        "inline-flex items-center gap-2 rounded-full border border-cyan-400/40 bg-cyan-500/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-cyan-200 shadow-[0_0_20px_rgba(0,255,255,0.2)]",
+        "hidden items-center gap-2 rounded-md border px-2.5 py-1.5 text-xs font-medium sm:inline-flex",
+        isConnected && wrongNetwork
+          ? "border-red-900/50 text-red-300/90"
+          : isConnected && onArc
+            ? "border-zinc-800 text-zinc-400"
+            : "border-zinc-800/80 text-zinc-600",
         className,
       )}
+      title="Arc Testnet"
     >
-      <BadgeCheck className="h-4 w-4 text-cyan-300" aria-hidden />
-      Deployed on Arc Testnet
+      <span
+        className={cn(
+          "h-1.5 w-1.5 rounded-full",
+          !isConnected && "bg-zinc-700",
+          isConnected && wrongNetwork && "bg-red-400",
+          isConnected && onArc && "bg-[#00f5ff]/60",
+          isConnected && !wrongNetwork && !onArc && "bg-amber-500/70",
+        )}
+        aria-hidden
+      />
+      Arc Testnet
     </div>
   );
 }

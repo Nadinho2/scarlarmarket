@@ -4,68 +4,67 @@ import { useMemo } from "react";
 import { useAccount, useBlock, useReadContract, useReadContracts } from "wagmi";
 
 import {
-  VIBE_PREDICTION_MARKET_ADDRESS,
-  isMarketsConfigured,
-  vibePredictionMarketAbi,
-} from "@/lib/contracts";
+  scalarPredictionMarketAbi,
+  SCALAR_MARKET_ADDRESS,
+  isScalarConfigured,
+} from "@/lib/scalar";
 import { arcTestnet } from "@/lib/web3";
 
-// SCALAR: on-chain market struct from `getMarket`
-export type MarketStruct = {
+// SCALAR: Mirrors `getMarket` tuple from `ScalarPredictionMarket`
+export type ScalarMarketStruct = {
   question: string;
   endTime: bigint;
+  category: string;
+  creator: `0x${string}`;
   resolved: boolean;
-  winningIsYes: boolean;
+  outcomeIsYes: boolean;
   totalYes: bigint;
   totalNo: bigint;
 };
 
-// SCALAR: market row + user position
-export type MarketWithPosition = {
+export type ScalarMarketRow = {
   id: bigint;
-  market: MarketStruct;
+  market: ScalarMarketStruct;
   userYes: bigint;
   userNo: bigint;
   claimed: boolean;
 };
 
-// SCALAR: chain time for countdowns / phase
-export function useChainNow() {
+// SCALAR: chain time only — never wall clock (testnets lag; Date.now() hid open markets / trending)
+export function useScalarChainNow(): bigint | undefined {
   const { data: block } = useBlock({
     chainId: arcTestnet.id,
     watch: true,
   });
-  return block?.timestamp ?? BigInt(Math.floor(Date.now() / 1000));
+  return block?.timestamp;
 }
 
-// SCALAR: contract owner — create + resolve authority
-export function usePredictionMarketOwner() {
+export function useScalarMarketOwner() {
   return useReadContract({
-    address: VIBE_PREDICTION_MARKET_ADDRESS,
-    abi: vibePredictionMarketAbi,
+    address: SCALAR_MARKET_ADDRESS,
+    abi: scalarPredictionMarketAbi,
     functionName: "owner",
     query: {
-      enabled: isMarketsConfigured(),
-      refetchInterval: 15_000,
+      enabled: isScalarConfigured(),
+      refetchInterval: 20_000,
     },
   });
 }
 
-// SCALAR: all markets + user stakes
-export function usePredictionMarkets() {
+export function useScalarMarkets() {
   const { address } = useAccount();
-  const now = useChainNow();
+  const now = useScalarChainNow();
 
   const {
     data: marketCount,
     isPending: countPending,
     refetch: refetchCount,
   } = useReadContract({
-    address: VIBE_PREDICTION_MARKET_ADDRESS,
-    abi: vibePredictionMarketAbi,
+    address: SCALAR_MARKET_ADDRESS,
+    abi: scalarPredictionMarketAbi,
     functionName: "marketCount",
     query: {
-      enabled: isMarketsConfigured(),
+      enabled: isScalarConfigured(),
       refetchInterval: 12_000,
     },
   });
@@ -75,8 +74,8 @@ export function usePredictionMarkets() {
   const marketContracts = useMemo(
     () =>
       Array.from({ length: n }, (_, i) => ({
-        address: VIBE_PREDICTION_MARKET_ADDRESS,
-        abi: vibePredictionMarketAbi,
+        address: SCALAR_MARKET_ADDRESS,
+        abi: scalarPredictionMarketAbi,
         functionName: "getMarket" as const,
         args: [BigInt(i)] as const,
       })),
@@ -90,7 +89,7 @@ export function usePredictionMarkets() {
   } = useReadContracts({
     contracts: marketContracts,
     query: {
-      enabled: isMarketsConfigured() && n > 0,
+      enabled: isScalarConfigured() && n > 0,
     },
   });
 
@@ -98,8 +97,8 @@ export function usePredictionMarkets() {
     () =>
       address && n > 0
         ? Array.from({ length: n }, (_, i) => ({
-            address: VIBE_PREDICTION_MARKET_ADDRESS,
-            abi: vibePredictionMarketAbi,
+            address: SCALAR_MARKET_ADDRESS,
+            abi: scalarPredictionMarketAbi,
             functionName: "getUserBet" as const,
             args: [BigInt(i), address] as const,
           }))
@@ -111,8 +110,8 @@ export function usePredictionMarkets() {
     () =>
       address && n > 0
         ? Array.from({ length: n }, (_, i) => ({
-            address: VIBE_PREDICTION_MARKET_ADDRESS,
-            abi: vibePredictionMarketAbi,
+            address: SCALAR_MARKET_ADDRESS,
+            abi: scalarPredictionMarketAbi,
             functionName: "claimed" as const,
             args: [BigInt(i), address] as const,
           }))
@@ -123,36 +122,36 @@ export function usePredictionMarkets() {
   const { data: betResults, refetch: refetchBets } = useReadContracts({
     contracts: betContracts,
     query: {
-      enabled: !!address && isMarketsConfigured() && n > 0,
+      enabled: !!address && isScalarConfigured() && n > 0,
     },
   });
 
   const { data: claimedResults, refetch: refetchClaimed } = useReadContracts({
     contracts: claimedContracts,
     query: {
-      enabled: !!address && isMarketsConfigured() && n > 0,
+      enabled: !!address && isScalarConfigured() && n > 0,
     },
   });
 
-  const rows: MarketWithPosition[] = useMemo(() => {
+  const rows: ScalarMarketRow[] = useMemo(() => {
     if (!marketResults || n === 0) return [];
-    const out: MarketWithPosition[] = [];
+    const out: ScalarMarketRow[] = [];
     for (let i = 0; i < n; i++) {
       const mr = marketResults[i];
       if (!mr || mr.status !== "success" || mr.result == null) continue;
-      const market = mr.result as MarketStruct;
+      const market = mr.result as ScalarMarketStruct;
       const betR = betResults?.[i];
-      const clR = claimedResults?.[i];
       let userYes = 0n;
       let userNo = 0n;
       if (betR?.status === "success" && Array.isArray(betR.result)) {
         userYes = betR.result[0] as bigint;
         userNo = betR.result[1] as bigint;
       }
-      let claimed = false;
-      if (clR?.status === "success" && typeof clR.result === "boolean") {
-        claimed = clR.result;
-      }
+      const clR = claimedResults?.[i];
+      const claimed =
+        clR?.status === "success" && typeof clR.result === "boolean"
+          ? clR.result
+          : false;
       out.push({
         id: BigInt(i),
         market,
@@ -162,12 +161,13 @@ export function usePredictionMarkets() {
       });
     }
     return out.sort((a, b) => {
-      const ra = statusRank(a.market, now);
-      const rb = statusRank(b.market, now);
-      if (ra !== rb) return ra - rb;
+      const va = volume(a.market);
+      const vb = volume(b.market);
+      if (va > vb) return -1;
+      if (va < vb) return 1;
       return Number(b.id - a.id);
     });
-  }, [marketResults, betResults, claimedResults, n, now]);
+  }, [marketResults, betResults, claimedResults, n]);
 
   const refetchAll = async () => {
     await refetchCount();
@@ -185,9 +185,6 @@ export function usePredictionMarkets() {
   };
 }
 
-// SCALAR: open → awaiting resolution → settled
-function statusRank(m: MarketStruct, now: bigint): number {
-  if (m.resolved) return 2;
-  if (now >= m.endTime) return 1;
-  return 0;
+function volume(m: ScalarMarketStruct): bigint {
+  return m.totalYes + m.totalNo;
 }

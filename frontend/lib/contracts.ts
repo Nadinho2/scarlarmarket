@@ -100,9 +100,10 @@ export const vibeTokenClaimer = {
   abi: vibeTokenClaimerAbi,
 } as const;
 
+// SCALAR: Collateral token only — staking env is optional / legacy.
 export function isContractConfigured(): boolean {
   const zero = "0x0000000000000000000000000000000000000000";
-  return VIBE_TOKEN_ADDRESS !== zero && VIBE_STAKING_ADDRESS !== zero;
+  return VIBE_TOKEN_ADDRESS !== zero;
 }
 
 export function isMarketsConfigured(): boolean {
@@ -114,3 +115,18 @@ export function isClaimerConfigured(): boolean {
   const zero = "0x0000000000000000000000000000000000000000";
   return VIBE_TOKEN_CLAIMER_ADDRESS !== zero;
 }
+
+// SCALAR: prediction market + USDC (primary config lives in `lib/scalar.ts`)
+export {
+  DEFAULT_SCALAR_MARKET_ADDRESS,
+  DEFAULT_SCALAR_USDC_ADDRESS,
+  SCALAR_CHAIN_ID,
+} from "./scalar-constants";
+export {
+  SCALAR_MARKET_ADDRESS,
+  SCALAR_USDC_ADDRESS,
+  isScalarConfigured,
+  scalarMarket,
+  scalarPredictionMarketAbi,
+  scalarUsdc,
+} from "./scalar";

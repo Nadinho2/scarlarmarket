@@ -1,11 +1,11 @@
 import { cn } from "@/utils/cn";
 
-/** Shared input styling for forms across the app */
+// SCALAR: shared form controls
 export function vibeInput(className?: string) {
   return cn(
-    "w-full rounded-xl border border-zinc-700/90 bg-zinc-950/80 px-4 py-3 text-[15px] text-zinc-100 tabular-nums",
-    "placeholder:text-zinc-600 shadow-[inset_0_1px_2px_rgba(0,0,0,0.4)] outline-none transition",
-    "focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20",
+    "w-full rounded-lg border border-zinc-800 bg-zinc-950/50 px-4 py-3 text-[15px] text-zinc-100 tabular-nums",
+    "placeholder:text-zinc-600 outline-none transition",
+    "focus:border-[#00f5ff]/35 focus:ring-1 focus:ring-[#00f5ff]/20",
     "disabled:cursor-not-allowed disabled:opacity-45",
     className,
   );

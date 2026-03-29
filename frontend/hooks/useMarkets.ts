@@ -1,4 +1,4 @@
-/** @deprecated Import from `@/hooks/usePredictionMarkets` — kept for backwards compatibility. */
+/** @deprecated Use `@/hooks/usePredictionMarkets` (SCALAR). */
 export {
   type MarketStruct,
   type MarketWithPosition,

@@ -19,7 +19,7 @@ import {
 } from "@/lib/contracts";
 import { AppPageShell } from "@/components/AppPageShell";
 import { SiteFooter } from "@/components/SiteFooter";
-import { VibeAppHeader } from "@/components/VibeAppHeader";
+import { ScalarAppHeader } from "@/components/ScalarAppHeader";
 import { useAutoArcSwitch } from "@/hooks/useAutoArcSwitch";
 import { vibeInputAdmin } from "@/lib/ui-classes";
 import { arcTestnet, wagmiConfig } from "@/lib/web3";
@@ -138,7 +138,7 @@ export function AdminDashboard() {
 
   return (
     <AppPageShell>
-      <VibeAppHeader />
+      <ScalarAppHeader />
       <div className="relative z-10 mx-auto max-w-2xl px-3 pb-12 pt-4 sm:px-6 sm:pb-16 sm:pt-8 lg:px-8">
         <header className="rounded-3xl border border-purple-500/20 bg-gradient-to-br from-[#12121f] via-[#0c0c14] to-[#161028] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_0_60px_rgba(168,85,247,0.08)] sm:p-8">
           <div className="flex items-start gap-4">
@@ -276,7 +276,7 @@ export function AdminDashboard() {
 
             <div className="mt-6">
               <TransactionButton
-                variant="purple"
+                variant="outline"
                 loading={busy}
                 disabled={!canMint || busy}
                 onClick={() => void handleMint()}

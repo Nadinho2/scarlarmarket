@@ -29,3 +29,6 @@ out/
 contracts/cache/
 contracts/out/
 contracts/broadcast/
+
+# SCALAR: duplicate full ABI artifact (committed slim `scalar-prediction-market.json` only)
+frontend/contracts/abi/*.full.json

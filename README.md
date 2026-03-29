@@ -29,8 +29,20 @@ arc-staking-vibe/
 
 ## Scripts
 
+- `npm run build` - Production build for the Next.js app (used by Vercel when root is the repo)
 - `npm run build:contracts` - Compile Solidity contracts with Foundry
 - `npm run test:contracts` - Run Foundry tests
 - `npm run deploy:contracts:arc-testnet` - Deploy staking contract to Arc Testnet
 - `npm run dev:frontend` - Start Next.js app
 - `npm run dev:backend` - Start Express API with reload
+
+## Deploy (Vercel)
+
+1. Import this repo in [Vercel](https://vercel.com).
+2. Set **Root Directory** to **`frontend`** (required — the Next.js app and `package-lock.json` live there).
+3. **Framework Preset**: Next.js (auto-detected).
+4. **Install Command**: `npm install` (or `npm ci` for reproducible builds).
+5. **Build Command**: `npm run build` (default).
+6. Add environment variables from `frontend/.env.local.example` (at minimum `NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID` for WalletConnect; Scalar Arc addresses are optional if you rely on app defaults).
+
+The repo root `package.json` includes `npm run build` → `npm run build:frontend` for convenience when developing from the monorepo root **after** running `npm install` inside `frontend/`. Vercel should still use **Root Directory = `frontend`** so the install uses `frontend/package-lock.json`.

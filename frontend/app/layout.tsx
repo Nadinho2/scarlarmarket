@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist_Mono, Inter } from "next/font/google";
 import { Toaster } from "sonner";
 
 import "./globals.css";
 import { AppProviders } from "./providers";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// SCALAR: clean system-adjacent sans
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
@@ -15,10 +17,11 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// SCALAR: design enhancement — product metadata
 export const metadata: Metadata = {
-  title: "Vibe Staking on Arc",
+  title: "Scalar Market — Prediction markets on Arc",
   description:
-    "Stake VIBE on Arc Testnet — high-energy Web3 dashboard for First Sons Academy.",
+    "Scalar Market — premium USDC prediction markets on Arc Testnet. Trade outcomes with clarity.",
 };
 
 export const viewport = {
@@ -36,7 +39,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${inter.variable} ${geistMono.variable} h-full scroll-smooth antialiased`}
       suppressHydrationWarning
     >
       <body className="flex min-h-full flex-col">
@@ -48,7 +51,7 @@ export default function RootLayout({
           toastOptions={{
             classNames: {
               toast:
-                "border border-cyan-500/30 bg-[#151525] text-white shadow-[0_0_30px_rgba(0,255,255,0.15)]",
+                "border border-zinc-800/90 bg-[#0a0a0f] text-zinc-100 shadow-[0_0_40px_-12px_rgba(0,245,255,0.15)]",
             },
           }}
         />
