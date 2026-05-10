@@ -34,7 +34,7 @@ import {
 } from "@/lib/scalar";
 import { arcTestnet, wagmiConfig } from "@/lib/web3";
 import { formatAddress, formatTokenAmount, getExplorerTxUrl } from "@/utils/format";
-import { toastTxError } from "@/utils/toastTx";
+import { toastTxError, toastTxSuccess } from "@/utils/toastTx";
 
 // SCALAR: design enhancement — create flow with fee callout + polished form
 export function ScalarCreatePage() {
