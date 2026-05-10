@@ -16,7 +16,9 @@ function getBaseUrl(): string {
     process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
     process.env.NEXT_PUBLIC_APP_URL?.trim() ||
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "");
-  return (raw || "http://localhost:3000").replace(/\/$/, "");
+  const cleaned = (raw || "http://localhost:3000").replace(/\/$/, "");
+  if (/^https?:\/\//i.test(cleaned)) return cleaned;
+  return `https://${cleaned}`;
 }
 
 function getArcRpcUrl(): string {
