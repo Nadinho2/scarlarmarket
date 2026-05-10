@@ -33,7 +33,7 @@ import {
   scalarUsdc,
 } from "@/lib/scalar";
 import { arcTestnet, wagmiConfig } from "@/lib/web3";
-import { formatAddress, formatTokenAmount, getExplorerTxUrl } from "@/utils/format";
+import { formatAddress, formatTokenAmount } from "@/utils/format";
 import { toastTxError, toastTxSuccess } from "@/utils/toastTx";
 
 // SCALAR: design enhancement — create flow with fee callout + polished form
@@ -165,20 +165,16 @@ export function ScalarCreatePage() {
       const creatorLabel = formatAddress(address, 4);
       const text = `I just created a new market on Scalar:\n"${shortQ}"\nCreator: ${creatorLabel}`;
       const intent = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(marketUrl)}`;
-      const txUrl = getExplorerTxUrl(hash);
 
-      toast.success("Market created", {
+      toast.success("Share on X", {
         description: `Creator: ${creatorLabel}`,
         action: {
           label: "Share on X",
           onClick: () => window.open(intent, "_blank", "noopener,noreferrer"),
         },
-        cancel: {
-          label: "View on Arcscan",
-          onClick: () => window.open(txUrl, "_blank", "noopener,noreferrer"),
-        },
       });
 
+      toastTxSuccess("Market created", hash);
       router.push(`/markets/${newId.toString()}`);
     } catch (e) {
       toastTxError(e, "Create failed");
