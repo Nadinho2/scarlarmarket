@@ -4,7 +4,8 @@ import { createPublicClient, http } from "viem";
 import { SCALAR_MARKET_ADDRESS, scalarPredictionMarketAbi } from "@/lib/scalar";
 import { formatAddress } from "@/utils/format";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export const size = {
   width: 1200,
@@ -76,35 +77,19 @@ function OgCard({
       style={{
         width: "100%",
         height: "100%",
-        background: "#0a0a0f",
+        backgroundColor: "#0a0a0f",
+        backgroundImage:
+          "radial-gradient(900px 520px at 35% -10%, rgba(0,245,255,0.18), transparent 55%), radial-gradient(700px 420px at 110% 0%, rgba(168,85,247,0.14), transparent 55%)",
         color: "#e4e4e7",
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
-        padding: 56,
-        position: "relative",
+        padding: 64,
         fontFamily:
           'ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"',
       }}
     >
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          background:
-            "radial-gradient(900px 520px at 35% -10%, rgba(0,245,255,0.18), transparent 55%), radial-gradient(700px 420px at 110% 0%, rgba(168,85,247,0.14), transparent 55%)",
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          background:
-            "linear-gradient(180deg, rgba(10,10,15,0) 0%, rgba(10,10,15,0.55) 100%)",
-        }}
-      />
-
-      <div style={{ position: "relative", display: "flex", gap: 14, alignItems: "center" }}>
+      <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
         <div
           style={{
             width: 48,
@@ -116,7 +101,6 @@ function OgCard({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            boxShadow: "0 0 40px rgba(0,245,255,0.12)",
           }}
         >
           <div
@@ -125,7 +109,6 @@ function OgCard({
               height: 14,
               borderRadius: 999,
               background: "rgba(0,245,255,0.95)",
-              boxShadow: "0 0 22px rgba(0,245,255,0.6)",
             }}
           />
         </div>
@@ -147,7 +130,7 @@ function OgCard({
         </div>
       </div>
 
-      <div style={{ position: "relative", marginTop: 28 }}>
+      <div style={{ marginTop: 28 }}>
         <div
           style={{
             display: "flex",
@@ -202,7 +185,6 @@ function OgCard({
 
       <div
         style={{
-          position: "relative",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "flex-end",
@@ -261,11 +243,37 @@ export default async function Image({
     } catch {}
   }
 
-  return new ImageResponse(
-    <OgCard title={title} category={category} creator={creator} id={id} />,
-    {
-      width: size.width,
-      height: size.height,
-    },
-  );
+  try {
+    return new ImageResponse(
+      <OgCard title={title} category={category} creator={creator} id={id} />,
+      {
+        width: size.width,
+        height: size.height,
+      },
+    );
+  } catch {
+    return new ImageResponse(
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: "#0a0a0f",
+          color: "#e4e4e7",
+          fontSize: 48,
+          fontWeight: 700,
+          fontFamily:
+            'ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"',
+        }}
+      >
+        Scalar Market
+      </div>,
+      {
+        width: size.width,
+        height: size.height,
+      },
+    );
+  }
 }
