@@ -15,6 +15,7 @@ import {
   simulateContract,
   waitForTransactionReceipt,
 } from "wagmi/actions";
+import { toast } from "sonner";
 
 import { AppPageShell } from "@/components/AppPageShell";
 import { ScalarAppHeader } from "@/components/ScalarAppHeader";
@@ -32,7 +33,7 @@ import {
   scalarUsdc,
 } from "@/lib/scalar";
 import { arcTestnet, wagmiConfig } from "@/lib/web3";
-import { formatTokenAmount } from "@/utils/format";
+import { formatAddress, formatTokenAmount } from "@/utils/format";
 import { toastTxError, toastTxSuccess } from "@/utils/toastTx";
 
 // SCALAR: design enhancement — create flow with fee callout + polished form
@@ -159,6 +160,20 @@ export function ScalarCreatePage() {
         functionName: "marketCount",
       });
       const newId = (count as bigint) - 1n;
+
+      const marketUrl = `${window.location.origin}/markets/${newId.toString()}`;
+      const shortQ = q.length > 180 ? `${q.slice(0, 177)}...` : q;
+      const creatorLabel = formatAddress(address, 4);
+      const text = `I just created a new market on Scalar:\n"${shortQ}"\nCreator: ${creatorLabel}`;
+      const intent = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(marketUrl)}`;
+
+      toast.success("Market created", {
+        action: {
+          label: "Share on X",
+          onClick: () => window.open(intent, "_blank", "noopener,noreferrer"),
+        },
+      });
+
       router.push(`/markets/${newId.toString()}`);
     } catch (e) {
       toastTxError(e, "Create failed");

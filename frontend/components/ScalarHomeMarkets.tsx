@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Radio, Search } from "lucide-react";
 import { useAccount, useSwitchChain } from "wagmi";
 
@@ -32,25 +33,53 @@ export function ScalarHomeMarkets() {
   const { chainId, isConnected } = useAccount();
   const { switchChain, isPending: switching } = useSwitchChain();
   const wrongNetwork = isConnected && chainId !== arcTestnet.id;
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   useAutoArcSwitch();
   useScalarMarketEvents(isScalarConfigured() && !wrongNetwork);
 
-  const [tab, setTab] = useState<FilterTab>("all");
-  const [category, setCategory] = useState<string>("");
   const [query, setQuery] = useState("");
 
   const { rows, now, isLoading } = useScalarMarkets();
+
+  const tab = useMemo<FilterTab>(() => {
+    const t = searchParams.get("tab")?.trim().toLowerCase();
+    if (t === "all" || t === "open" || t === "closing" || t === "resolved")
+      return t;
+    return "all";
+  }, [searchParams]);
+
+  const category = useMemo(() => {
+    const urlCategory = searchParams.get("category")?.trim();
+    if (!urlCategory) return "";
+    const canonical = MARKET_CATEGORIES.find(
+      (c) => c.toLowerCase() === urlCategory.toLowerCase(),
+    );
+    return canonical ?? "";
+  }, [searchParams]);
+
+  function navigateFilters(next: { tab?: FilterTab; category?: string }) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (next.tab !== undefined) params.set("tab", next.tab);
+    if (next.category !== undefined) {
+      if (next.category) params.set("category", next.category);
+      else params.delete("category");
+    }
+    const qs = params.toString();
+    router.push(qs ? `${pathname}?${qs}#markets` : `${pathname}#markets`);
+  }
 
   const trending = useMemo(() => {
     const stillTakingBets = (r: ScalarMarketRow) =>
       !r.market.resolved &&
       (now === undefined || now <= r.market.endTime);
 
-    const primary = rows.filter(stillTakingBets).slice(0, 8);
+    const primary = rows.filter(stillTakingBets).slice(0, 4);
     if (primary.length > 0) return primary;
 
-    return rows.filter((r) => !r.market.resolved).slice(0, 8);
+    return rows.filter((r) => !r.market.resolved).slice(0, 4);
   }, [rows, now]);
 
   const filtered = useMemo(() => {
@@ -61,13 +90,14 @@ export function ScalarHomeMarkets() {
         return false;
       if (q && !m.question.toLowerCase().includes(q)) return false;
       if (tab === "resolved") return m.resolved;
+      if (tab === "all") return !m.resolved;
       if (tab === "open")
         return !m.resolved && (now === undefined || now <= m.endTime);
       if (tab === "closing") {
         if (m.resolved || now === undefined || now > m.endTime) return false;
         return m.endTime - now <= CLOSING_SOON_SEC;
       }
-      return true;
+      return !m.resolved;
     });
   }, [rows, tab, category, query, now]);
 
@@ -132,6 +162,12 @@ export function ScalarHomeMarkets() {
             >
               Browse markets
             </a>
+            <Link
+              href="/?category=NFTs&tab=all#markets"
+              className="inline-flex min-h-[46px] items-center justify-center rounded-xl border border-[#a855f7]/35 bg-gradient-to-br from-[#a855f7]/15 via-zinc-950/40 to-zinc-950/70 px-7 text-sm font-semibold text-[#d8b4fe] shadow-[0_0_34px_-16px_rgba(168,85,247,0.55)] transition-all duration-300 hover:border-[#00f5ff]/25 hover:text-white hover:shadow-[0_0_44px_-16px_rgba(0,245,255,0.35)]"
+            >
+              Hottest NFT MARKET
+            </Link>
             <Link
               href="/create"
               className="inline-flex min-h-[46px] items-center justify-center rounded-xl border border-zinc-700/90 bg-zinc-900/35 px-7 text-sm font-semibold text-zinc-200 transition-all duration-300 hover:border-[#a855f7]/35 hover:bg-zinc-900/60 hover:shadow-[0_0_32px_-12px_rgba(168,85,247,0.25)]"
@@ -225,7 +261,7 @@ export function ScalarHomeMarkets() {
                 <button
                   key={key}
                   type="button"
-                  onClick={() => setTab(key)}
+                  onClick={() => navigateFilters({ tab: key })}
                   className={cn(
                     "rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200",
                     tab === key
@@ -241,7 +277,7 @@ export function ScalarHomeMarkets() {
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
-                onClick={() => setCategory("")}
+                onClick={() => navigateFilters({ category: "" })}
                 className={cn(
                   "rounded-full px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wide transition-all duration-200",
                   category === ""
@@ -255,7 +291,7 @@ export function ScalarHomeMarkets() {
                 <button
                   key={c}
                   type="button"
-                  onClick={() => setCategory(c)}
+                  onClick={() => navigateFilters({ category: c })}
                   className={cn(
                     "rounded-full px-3.5 py-1.5 text-xs font-semibold tracking-wide transition-all duration-200",
                     category === c

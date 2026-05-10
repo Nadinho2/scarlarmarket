@@ -44,6 +44,7 @@ export const MARKET_CATEGORIES = [
   "Sports",
   "Entertainment",
   "Economy",
+  "NFTs",
   "Others",
 ] as const;
 
@@ -53,16 +54,18 @@ export function matchesMarketCategory(
   filter: string,
 ): boolean {
   if (!filter) return true;
-  const c = onChainCategory.trim();
-  if (c === filter) return true;
-  if (filter === "Others")
+  const c = onChainCategory.trim().toLowerCase();
+  const f = filter.trim().toLowerCase();
+  if (c === f) return true;
+  if (f === "others")
     return (
-      c === "Other" ||
-      c === "Others" ||
-      c === "Science" ||
-      c === "General" ||
+      c === "other" ||
+      c === "others" ||
+      c === "science" ||
+      c === "general" ||
       c.length === 0
     );
+  if (f === "nfts") return c === "nft" || c === "nfts";
   return false;
 }
 
