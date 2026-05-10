@@ -26,7 +26,7 @@ import { cn } from "@/utils/cn";
 
 const CLOSING_SOON_SEC = 86400n; // SCALAR: 24h threshold for "Closing soon"
 
-type FilterTab = "all" | "open" | "closing" | "resolved";
+type FilterTab = "all" | "open" | "closing" | "awaiting" | "resolved";
 
 // SCALAR: visual enhancement — layered hero, tactile filters, rich market grid
 export function ScalarHomeMarkets() {
@@ -46,7 +46,13 @@ export function ScalarHomeMarkets() {
 
   const tab = useMemo<FilterTab>(() => {
     const t = searchParams.get("tab")?.trim().toLowerCase();
-    if (t === "all" || t === "open" || t === "closing" || t === "resolved")
+    if (
+      t === "all" ||
+      t === "open" ||
+      t === "closing" ||
+      t === "awaiting" ||
+      t === "resolved"
+    )
       return t;
     return "all";
   }, [searchParams]);
@@ -90,6 +96,8 @@ export function ScalarHomeMarkets() {
         return false;
       if (q && !m.question.toLowerCase().includes(q)) return false;
       if (tab === "resolved") return m.resolved;
+      if (tab === "awaiting")
+        return !m.resolved && now !== undefined && now > m.endTime;
       if (tab === "all") return !m.resolved;
       if (tab === "open")
         return !m.resolved && (now === undefined || now <= m.endTime);
@@ -255,6 +263,7 @@ export function ScalarHomeMarkets() {
                   ["all", "All"],
                   ["open", "Open"],
                   ["closing", "Closing soon"],
+                  ["awaiting", "Awaiting resolution"],
                   ["resolved", "Resolved"],
                 ] as const
               ).map(([key, label]) => (
